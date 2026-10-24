@@ -1,0 +1,50 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "CloudAgent-Daemon",
+  "documentNamespace": "https://spdx.org/spdxdocs/CloudAgent-Daemon-v1.1.0-4c276112",
+  "creationInfo": {
+    "created": "2026-09-15T12:00:00Z",
+    "creators": [
+      "Tool: spdx-tools-golang",
+      "Organization: Acme Cyber Systems AG"
+    ]
+  },
+  "packages": [
+    {
+      "name": "openssl",
+      "SPDXID": "SPDXRef-Package-OpenSSL",
+      "versionInfo": "1.1.1k",
+      "description": "Secure Sockets Layer and Cryptography Toolkit",
+      "licenseConcluded": "OpenSSL",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/openssl@1.1.1k"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f280e224e0b04c10708608f6540c49cf554dbe6ba7b7445c92849fb59f2c8dcf"
+        }
+      ]
+    },
+    {
+      "name": "redis",
+      "SPDXID": "SPDXRef-Package-Redis",
+      "versionInfo": "6.0.9",
+      "description": "In-memory database and cache",
+      "licenseConcluded": "BSD-3-Clause",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/redis@6.0.9"
+        }
+      ]
+    }
+  ]
+}

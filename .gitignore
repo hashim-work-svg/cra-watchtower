@@ -1,0 +1,23 @@
+# Binaries and outputs
+bin/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Cache and local databases
+*.db
+*.db-journal
+data/
+
+# Test coverage
+coverage.out
+*.test
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
