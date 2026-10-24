@@ -22,9 +22,10 @@ When a manufacturer becomes aware of an **actively exploited vulnerability** aff
 2. **Stage 2 — Vulnerability Notification (Within 72 Hours):**
    * *Content:* Detailed vulnerability assessment, affected component versions, CVSS severity, indicators of compromise, and initial mitigation guidance.
 
-3. **Stage 3 — Final Report (Within 14 Days):**
-   * *Deadline:* Within 14 days after a corrective patch or mitigation is made available, or at most 1 month after the Stage 2 report.
-   * *Content:* Comprehensive root cause analysis, permanent remediation details, and advice for downstream users.
+3. **Stage 3 — Final Vulnerability Report (Within 14 Days of Mitigation):**
+   * *Deadline:* **No later than 14 days after a corrective or mitigating measure becomes available** (under Article 14(4)).
+   * *Note on Incident Reporting:* Under Article 14(3), the 1-month final report deadline applies specifically to *severe incidents*, whereas for *actively exploited vulnerabilities*, the final report clock triggers when a patch or mitigation is published/available ($T_{14} = \text{mitigation timestamp} + 14\text{ days}$).
+   * *Content:* Detailed technical findings, description of the corrective/mitigating measures taken, root cause analysis, and security advice for downstream users.
 
 ---
 

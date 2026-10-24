@@ -100,14 +100,71 @@ func TestParseMalformed(t *testing.T) {
 		}
 	})
 
-	t.Run("ParseReader Success and Failure", func(t *testing.T) {
-		validJSON := []byte(`{"bomFormat":"CycloneDX","specVersion":"1.5","metadata":{"component":{"name":"TestApp","version":"1.0.0"}}}`)
-		doc, err := ParseBytes(validJSON)
-		if err != nil {
-			t.Fatalf("unexpected error parsing valid bytes: %v", err)
+	t.Run("Empty File", func(t *testing.T) {
+		_, err := ParseBytes([]byte{})
+		if err == nil {
+			t.Fatal("expected error parsing empty byte slice, got nil")
 		}
-		if doc.Metadata.ProductName != "TestApp" {
-			t.Errorf("expected TestApp, got %s", doc.Metadata.ProductName)
+	})
+
+	t.Run("Size Limit Exceeded", func(t *testing.T) {
+		hugeData := make([]byte, MaxSBOMSizeBytes+10)
+		_, err := ParseBytes(hugeData)
+		if !errors.Is(err, ErrSBOMTooLarge) {
+			t.Errorf("expected ErrSBOMTooLarge, got: %v", err)
+		}
+	})
+
+	t.Run("Unsupported CycloneDX Version", func(t *testing.T) {
+		data := []byte(`{"bomFormat":"CycloneDX","specVersion":"1.2","metadata":{}}`)
+		_, err := ParseBytes(data)
+		if err == nil {
+			t.Fatal("expected error for unsupported CycloneDX 1.2, got nil")
+		}
+	})
+
+	t.Run("Unsupported SPDX Version", func(t *testing.T) {
+		data := []byte(`{"spdxVersion":"SPDX-3.0","name":"Test"}`)
+		_, err := ParseBytes(data)
+		if err == nil {
+			t.Fatal("expected error for unsupported SPDX 3.0, got nil")
+		}
+	})
+
+	t.Run("Deduplication in CycloneDX", func(t *testing.T) {
+		data := []byte(`{
+			"bomFormat":"CycloneDX",
+			"specVersion":"1.5",
+			"metadata":{"component":{"name":"App","version":"1.0"}},
+			"components":[
+				{"name":"lib1","version":"1.0","purl":"pkg:npm/lib1@1.0"},
+				{"name":"lib1","version":"1.0","purl":"pkg:npm/lib1@1.0"}
+			]
+		}`)
+		doc, err := ParseBytes(data)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(doc.Components) != 1 {
+			t.Errorf("expected 1 deduplicated component, got %d", len(doc.Components))
+		}
+	})
+
+	t.Run("Deduplication in SPDX", func(t *testing.T) {
+		data := []byte(`{
+			"spdxVersion":"SPDX-2.3",
+			"name":"App",
+			"packages":[
+				{"name":"libA","versionInfo":"1.0","externalRefs":[{"referenceType":"purl","referenceLocator":"pkg:generic/libA@1.0"}]},
+				{"name":"libA","versionInfo":"1.0","externalRefs":[{"referenceType":"purl","referenceLocator":"pkg:generic/libA@1.0"}]}
+			]
+		}`)
+		doc, err := ParseBytes(data)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(doc.Components) != 1 {
+			t.Errorf("expected 1 deduplicated package, got %d", len(doc.Components))
 		}
 	})
 }

@@ -20,6 +20,7 @@ type spdxRaw struct {
 		Name             string `json:"name"`
 		VersionInfo      string `json:"versionInfo"`
 		Description      string `json:"description"`
+		Supplier         string `json:"supplier"`
 		LicenseConcluded string `json:"licenseConcluded"`
 		ExternalRefs     []struct {
 			ReferenceCategory string `json:"referenceCategory"`
@@ -49,9 +50,17 @@ func ParseSPDX(r io.Reader) (*SBOM, error) {
 		return nil, fmt.Errorf("%w: missing SPDX- version identifier", ErrInvalidSBOM)
 	}
 
+	// Validate supported SPDX version (SPDX-2.2 and SPDX-2.3 supported)
+	switch raw.SPDXVersion {
+	case "SPDX-2.2", "SPDX-2.3":
+		// supported
+	default:
+		return nil, fmt.Errorf("%w: unsupported SPDX version %q (supported: SPDX-2.2, SPDX-2.3)", ErrInvalidSBOM, raw.SPDXVersion)
+	}
+
 	prodName := raw.Name
 	if prodName == "" {
-		prodName = "unnamed-spdx-product"
+		prodName = "unknown"
 	}
 
 	ts := raw.CreationInfo.Created
@@ -59,6 +68,7 @@ func ParseSPDX(r io.Reader) (*SBOM, error) {
 		ts = time.Now().UTC()
 	}
 
+	seenPURLs := make(map[string]bool)
 	components := make([]Component, 0, len(raw.Packages))
 	for _, p := range raw.Packages {
 		if p.Name == "" {
@@ -74,6 +84,10 @@ func ParseSPDX(r io.Reader) (*SBOM, error) {
 		}
 
 		purl := EnsurePURL(purlStr, "generic", p.Name, p.VersionInfo)
+		if seenPURLs[purl] {
+			continue
+		}
+		seenPURLs[purl] = true
 
 		var licenses []string
 		if p.LicenseConcluded != "" && p.LicenseConcluded != "NOASSERTION" {
@@ -90,6 +104,7 @@ func ParseSPDX(r io.Reader) (*SBOM, error) {
 			Version:     p.VersionInfo,
 			PURL:        purl,
 			Type:        "library",
+			Supplier:    p.Supplier,
 			Description: p.Description,
 			Licenses:    licenses,
 			Hash:        hash,
@@ -100,7 +115,7 @@ func ParseSPDX(r io.Reader) (*SBOM, error) {
 		Format: FormatSPDX,
 		Metadata: Metadata{
 			ProductName:    prodName,
-			ProductVersion: "1.0.0",
+			ProductVersion: "unknown",
 			Timestamp:      ts,
 			SpecVersion:    raw.SPDXVersion,
 		},

@@ -111,6 +111,30 @@ func TestEnsurePURL(t *testing.T) {
 			version:      "1.0",
 			expected:     "pkg:cargo/serde@1.0",
 		},
+		{
+			name:         "Maven groupId:artifactId syntax",
+			existingPURL: "",
+			compType:     "",
+			compName:     "org.apache.logging.log4j:log4j-core",
+			version:      "2.14.1",
+			expected:     "pkg:maven/org.apache.logging.log4j/log4j-core@2.14.1",
+		},
+		{
+			name:         "NPM scoped package",
+			existingPURL: "",
+			compType:     "",
+			compName:     "@angular/core",
+			version:      "15.0.0",
+			expected:     "pkg:npm/%40angular/core@15.0.0",
+		},
+		{
+			name:         "Go module path",
+			existingPURL: "",
+			compType:     "",
+			compName:     "github.com/gin-gonic/gin",
+			version:      "v1.9.0",
+			expected:     "pkg:golang/github.com/gin-gonic/gin@v1.9.0",
+		},
 	}
 
 	for _, tc := range tests {

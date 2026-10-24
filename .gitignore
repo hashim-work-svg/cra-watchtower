@@ -11,6 +11,8 @@ dist/
 *.db
 *.db-journal
 data/
+demo-drafts/
+.cra-watchtower/
 
 # Test coverage
 coverage.out

@@ -21,6 +21,9 @@ type cycloneDXRaw struct {
 		Manufacture struct {
 			Name string `json:"name"`
 		} `json:"manufacture"`
+		Manufacturer struct {
+			Name string `json:"name"`
+		} `json:"manufacturer"`
 	} `json:"metadata"`
 	Components []struct {
 		Name        string `json:"name"`
@@ -28,7 +31,10 @@ type cycloneDXRaw struct {
 		PURL        string `json:"purl"`
 		Type        string `json:"type"`
 		Description string `json:"description"`
-		Licenses    []struct {
+		Supplier    struct {
+			Name string `json:"name"`
+		} `json:"supplier"`
+		Licenses []struct {
 			License struct {
 				ID   string `json:"id"`
 				Name string `json:"name"`
@@ -53,18 +59,26 @@ func ParseCycloneDX(r io.Reader) (*SBOM, error) {
 		return nil, fmt.Errorf("%w: invalid cyclonedx json: %v", ErrInvalidSBOM, err)
 	}
 
-	if raw.BOMFormat != "CycloneDX" && raw.SpecVersion == "" {
-		return nil, fmt.Errorf("%w: missing CycloneDX header", ErrInvalidSBOM)
+	if raw.BOMFormat != "CycloneDX" || raw.SpecVersion == "" {
+		return nil, fmt.Errorf("%w: missing or invalid CycloneDX header", ErrInvalidSBOM)
+	}
+
+	// Validate CycloneDX spec version (1.4, 1.5, 1.6 supported)
+	switch raw.SpecVersion {
+	case "1.4", "1.5", "1.6":
+		// supported
+	default:
+		return nil, fmt.Errorf("%w: unsupported CycloneDX specVersion %q (supported: 1.4, 1.5, 1.6)", ErrInvalidSBOM, raw.SpecVersion)
 	}
 
 	prodName := raw.Metadata.Component.Name
 	if prodName == "" {
-		prodName = "unnamed-product"
+		prodName = "unknown"
 	}
 
 	prodVersion := raw.Metadata.Component.Version
 	if prodVersion == "" {
-		prodVersion = "0.0.0"
+		prodVersion = "unknown"
 	}
 
 	ts := raw.Metadata.Timestamp
@@ -72,6 +86,12 @@ func ParseCycloneDX(r io.Reader) (*SBOM, error) {
 		ts = time.Now().UTC()
 	}
 
+	manufacturer := raw.Metadata.Manufacturer.Name
+	if manufacturer == "" {
+		manufacturer = raw.Metadata.Manufacture.Name
+	}
+
+	seenPURLs := make(map[string]bool)
 	components := make([]Component, 0, len(raw.Components))
 	for _, c := range raw.Components {
 		if c.Name == "" {
@@ -79,6 +99,10 @@ func ParseCycloneDX(r io.Reader) (*SBOM, error) {
 		}
 
 		purl := EnsurePURL(c.PURL, c.Type, c.Name, c.Version)
+		if seenPURLs[purl] {
+			continue
+		}
+		seenPURLs[purl] = true
 
 		var licenses []string
 		for _, lic := range c.Licenses {
@@ -99,6 +123,7 @@ func ParseCycloneDX(r io.Reader) (*SBOM, error) {
 			Version:     c.Version,
 			PURL:        purl,
 			Type:        c.Type,
+			Supplier:    c.Supplier.Name,
 			Description: c.Description,
 			Licenses:    licenses,
 			Hash:        hash,
@@ -112,7 +137,7 @@ func ParseCycloneDX(r io.Reader) (*SBOM, error) {
 			ProductVersion: prodVersion,
 			Timestamp:      ts,
 			SpecVersion:    raw.SpecVersion,
-			Manufacturer:   raw.Metadata.Manufacture.Name,
+			Manufacturer:   manufacturer,
 		},
 		Components: components,
 	}, nil

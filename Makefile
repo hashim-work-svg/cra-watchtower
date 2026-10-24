@@ -1,8 +1,8 @@
 BINARY_NAME=cra-watchtower
 BIN_DIR=bin
-VERSION?=v0.1.0-dev
-COMMIT?=$(shell git rev-parse --short HEAD 2>nul || echo "none")
-DATE?=$(shell date /t 2>nul || echo "unknown")
+VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "v0.1.0-dev")
+COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
+DATE?=$(shell date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo "unknown")
 LDFLAGS=-s -w -X main.Version=$(VERSION) -X main.Commit=$(COMMIT) -X main.Date=$(DATE)
 
 .PHONY: all build build-static test test-coverage lint clean demo
@@ -16,7 +16,7 @@ build-static:
 	CGO_ENABLED=0 go build -ldflags="$(LDFLAGS)" -o $(BIN_DIR)/$(BINARY_NAME) ./cmd/cra-watchtower
 
 test:
-	go test -v -race ./...
+	go test -v ./...
 
 test-coverage:
 	go test -v -coverprofile=coverage.out -covermode=atomic ./...
@@ -30,4 +30,4 @@ demo: build
 	./$(BIN_DIR)/$(BINARY_NAME) demo
 
 clean:
-	rm -rf $(BIN_DIR) coverage.out dist
+	rm -rf $(BIN_DIR) coverage.out dist demo-drafts

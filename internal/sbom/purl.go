@@ -35,16 +35,42 @@ func EnsurePURL(existingPURL, compType, name, version string) string {
 		}
 	}
 
-	// Determine purl type from component ecosystem hint
-	purlType := mapComponentTypeToPURLType(compType)
 	cleanName := strings.TrimSpace(name)
 	cleanVersion := strings.TrimSpace(version)
-
 	if cleanName == "" {
 		cleanName = "unknown-component"
 	}
 
-	instance := packageurl.NewPackageURL(purlType, "", cleanName, cleanVersion, nil, "")
+	purlType := mapComponentTypeToPURLType(compType)
+	var namespace string
+
+	// Handle Maven groupId:artifactId syntax
+	if strings.Contains(cleanName, ":") {
+		parts := strings.SplitN(cleanName, ":", 2)
+		namespace = parts[0]
+		cleanName = parts[1]
+		if purlType == packageurl.TypeGeneric {
+			purlType = packageurl.TypeMaven
+		}
+	} else if strings.HasPrefix(cleanName, "@") && strings.Contains(cleanName, "/") {
+		// NPM scoped package e.g. @angular/core
+		parts := strings.SplitN(cleanName, "/", 2)
+		namespace = parts[0]
+		cleanName = parts[1]
+		if purlType == packageurl.TypeGeneric {
+			purlType = packageurl.TypeNPM
+		}
+	} else if (strings.HasPrefix(cleanName, "github.com/") || strings.HasPrefix(cleanName, "golang.org/")) && strings.Contains(cleanName, "/") {
+		// Go module path e.g. github.com/gin-gonic/gin
+		idx := strings.LastIndex(cleanName, "/")
+		namespace = cleanName[:idx]
+		cleanName = cleanName[idx+1:]
+		if purlType == packageurl.TypeGeneric {
+			purlType = packageurl.TypeGolang
+		}
+	}
+
+	instance := packageurl.NewPackageURL(purlType, namespace, cleanName, cleanVersion, nil, "")
 	return instance.ToString()
 }
 
