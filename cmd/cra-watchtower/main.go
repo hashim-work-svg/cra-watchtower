@@ -30,6 +30,13 @@ var (
 )
 
 func main() {
+	if err := newRootCmd().Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func newRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "cra-watchtower",
 		Short: "EU Cyber Resilience Act (CRA) Vulnerability & Compliance Engine",
@@ -446,10 +453,7 @@ NOTICE: Technical compliance aid only. Not legal advice.`,
 	rootCmd.AddCommand(diffCmd)
 	rootCmd.AddCommand(demoCmd)
 
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
+	return rootCmd
 }
 
 // loadDatabase initializes a database from cacheDir if available, falling back to embedded fixtures.
