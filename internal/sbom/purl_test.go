@@ -95,6 +95,22 @@ func TestEnsurePURL(t *testing.T) {
 			version:      "1.0.0",
 			expected:     "pkg:generic/internal-lib@1.0.0",
 		},
+		{
+			name:         "Fallback with empty name",
+			existingPURL: "",
+			compType:     "golang",
+			compName:     "",
+			version:      "1.0.0",
+			expected:     "pkg:golang/unknown-component@1.0.0",
+		},
+		{
+			name:         "Ecosystem mappings",
+			existingPURL: "",
+			compType:     "cargo",
+			compName:     "serde",
+			version:      "1.0",
+			expected:     "pkg:cargo/serde@1.0",
+		},
 	}
 
 	for _, tc := range tests {
@@ -105,4 +121,23 @@ func TestEnsurePURL(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestParsePURL(t *testing.T) {
+	t.Run("Valid PURL", func(t *testing.T) {
+		purl, err := ParsePURL("pkg:golang/github.com/gin-gonic/gin@v1.9.0")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if purl.Type != "golang" || purl.Name != "gin" {
+			t.Errorf("unexpected parsed purl: %#v", purl)
+		}
+	})
+
+	t.Run("Invalid PURL", func(t *testing.T) {
+		_, err := ParsePURL("invalid purl")
+		if err == nil {
+			t.Fatal("expected error parsing invalid purl, got nil")
+		}
+	})
 }

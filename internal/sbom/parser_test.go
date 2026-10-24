@@ -99,4 +99,15 @@ func TestParseMalformed(t *testing.T) {
 			t.Fatal("expected error for non-existent file, got nil")
 		}
 	})
+
+	t.Run("ParseReader Success and Failure", func(t *testing.T) {
+		validJSON := []byte(`{"bomFormat":"CycloneDX","specVersion":"1.5","metadata":{"component":{"name":"TestApp","version":"1.0.0"}}}`)
+		doc, err := ParseBytes(validJSON)
+		if err != nil {
+			t.Fatalf("unexpected error parsing valid bytes: %v", err)
+		}
+		if doc.Metadata.ProductName != "TestApp" {
+			t.Errorf("expected TestApp, got %s", doc.Metadata.ProductName)
+		}
+	})
 }
