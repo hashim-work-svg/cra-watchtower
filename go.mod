@@ -1,6 +1,6 @@
 module github.com/hashim-work-svg/cra-watchtower
 
-go 1.25.1
+go 1.22.0
 
 require (
 	github.com/CycloneDX/cyclonedx-go v0.8.0 // indirect
